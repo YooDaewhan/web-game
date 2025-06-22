@@ -1,66 +1,44 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Status from "@/components/Status";
-import Inventory from "@/components/Inventory";
+import useUserData from "@/hooks/useUserData";
+import Status from "@/components/status/Status";
+import Inventory from "@/components/inventory/Inventory";
+import { Hunting, Shop, Town } from "@/components/map";
+import { Header, Footer } from "@/components/layout";
+import { useSectionStore } from "@/store/sectionStore";
 
-export default function MainMainPage() {
-  const [user, setUser] = useState("");
-  const router = useRouter();
+export default function MainPage() {
+  const { user, status, inventory, loading } = useUserData();
+  const currentSection = useSectionStore((state) => state.currentSection);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      alert("로그인이 필요합니다.");
-      router.push("/login");
-    } else {
-      setUser(storedUser);
-    }
-  }, []);
+  if (loading) return <div>로딩 중...</div>;
+
+  const centerComponentMap = {
+    Hunting: <Hunting />,
+    Shop: <Shop />,
+    Town: <Town />,
+  };
 
   return (
     <div
       style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
     >
-      {/* Header */}
-      <header
-        style={{
-          background: "#222",
-          color: "#fff",
-          padding: "1rem",
-          display: "flex",
-          justifyContent: "space-around",
-          fontWeight: "bold",
-        }}
-      >
-        <div>사냥터</div>
-        <div>상점</div>
-        <div>마을</div>
-      </header>
+      <Header />
 
-      {/* Main Content */}
       <main style={{ flex: 1, display: "flex" }}>
-        {/* 왼쪽 한칸 */}
         <aside style={{ flex: 1, background: "#eee", padding: "1rem" }}>
-          <Status />
+          <Status status={status} />
         </aside>
-
-        {/* 가운데 네칸 */}
-        <section style={{ flex: 4, padding: "1rem" }}>중앙 게임 화면</section>
-
-        {/* 오른쪽 한칸 */}
+        <section style={{ flex: 4, padding: "1rem" }}>
+          {centerComponentMap[currentSection] || (
+            <div>존재하지 않는 화면입니다.</div>
+          )}
+        </section>
         <aside style={{ flex: 1, background: "#eee", padding: "1rem" }}>
-          <Inventory />
+          <Inventory inventory={inventory} />
         </aside>
       </main>
 
-      {/* Footer */}
-      <footer
-        style={{
-          background: "#222",
-          height: "50px",
-        }}
-      ></footer>
+      <Footer />
     </div>
   );
 }

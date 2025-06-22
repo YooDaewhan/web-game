@@ -60,12 +60,10 @@ export default function Inventory() {
       <div className="flex-2 basis-2/3 overflow-auto border">
         <div className="border relative">
           <span className="">인벤토리</span>
-          <a>전체</a>
-          <a>aa</a>
-          <a>bb</a>
-          <a>cc</a>
         </div>
-        <h3 className="font-bold text-lg mb-4">...</h3>
+        <div className="border relative">
+          <span className="">인벤토리</span>
+        </div>
         <div className="grid grid-cols-4 gap-[1px]">
           {items.map((item, idx) => (
             <div
