@@ -68,6 +68,13 @@ export default function LoginPage() {
           <button type="submit">로그인</button>
           {message && <div style={{ marginTop: 10 }}>{message}</div>}
         </form>
+        <button
+          style={{ marginTop: 16, width: "100%" }}
+          type="button"
+          onClick={() => router.push("/")}
+        >
+          뒤로가기
+        </button>
       </div>
     </div>
   );
