@@ -12,6 +12,17 @@ export async function POST(req) {
       "INSERT INTO status (id, name, birth, sex) VALUES (?, ?, ?, ?)",
       [id, name, birth, sex]
     );
+
+    await db.query("INSERT INTO equipment  (id, inventory) VALUES (?, ?)", [
+      id,
+      JSON.stringify([
+        { item: "aa001", count: 1000 },
+        { item: "aa002", count: 1 },
+        { item: "aa003", count: 5 },
+        { item: "aa004", count: 5 },
+        { item: "aa005", count: 1 },
+      ]),
+    ]);
     await db.query("INSERT INTO inventory (id, inventory) VALUES (?, ?)", [
       id,
       JSON.stringify([

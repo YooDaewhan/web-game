@@ -3,40 +3,70 @@ import pool from "@/lib/db";
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
+  const type = searchParams.get("type") || "inventory";
 
   if (!id) {
     return new Response("id 파라미터가 필요합니다.", { status: 400 });
   }
 
+  // 각 type별로 테이블, 컬럼 정의
+  const tableMap = {
+    inventory: { table: "inventory", column: "inventory", hasMoney: true },
+    equipment: { table: "equipment", column: "inventory", hasMoney: false },
+    etc: { table: "etc", column: "inventory", hasMoney: false },
+  };
+
+  const conf = tableMap[type];
+  if (!conf) {
+    return new Response("지원하지 않는 type입니다.", { status: 400 });
+  }
+
   try {
-    const [rows] = await pool.query(
-      "SELECT money, inventory FROM inventory WHERE id = ?",
-      [id]
-    );
+    // money 컬럼은 inventory에서만 select, 나머지는 inventory만
+    let sql, params;
+    if (conf.hasMoney) {
+      sql = `SELECT money, ${conf.column} FROM ${conf.table} WHERE id = ?`;
+    } else {
+      sql = `SELECT ${conf.column} FROM ${conf.table} WHERE id = ?`;
+    }
+    params = [id];
+
+    const [rows] = await pool.query(sql, params);
 
     if (rows.length === 0) {
-      return new Response("해당 사용자의 인벤토리가 없습니다.", {
-        status: 404,
-      });
-    }
-
-    // inventory 파싱 (string 또는 object 대응)
-    let inventory = rows[0].inventory;
-    if (typeof inventory === "string") {
-      inventory = JSON.parse(inventory);
-    }
-    if (!Array.isArray(inventory)) inventory = [];
-
-    // 아이템 코드 리스트 추출
-    const itemCodes = inventory.map((i) => i.item);
-    if (itemCodes.length === 0) {
       return Response.json({
-        money: rows[0].money,
+        money: 0,
         inventory: [],
       });
     }
 
-    // item 테이블에서 정보 모두 불러오기 (IN 쿼리)
+    // 파싱할 값만 뽑기
+    let money = 0;
+    let inventory = rows[0][conf.column];
+
+    if (conf.hasMoney) {
+      money = rows[0].money || 0;
+    }
+
+    // JSON 파싱
+    if (typeof inventory === "string") {
+      try {
+        inventory = JSON.parse(inventory);
+      } catch {
+        inventory = [];
+      }
+    }
+    if (!Array.isArray(inventory)) inventory = [];
+
+    const itemCodes = inventory.map((i) => i.item);
+    if (itemCodes.length === 0) {
+      return Response.json({
+        money,
+        inventory: [],
+      });
+    }
+
+    // item 정보 매칭
     const [itemRows] = await pool.query(
       `SELECT * FROM item WHERE itemCode IN (${itemCodes
         .map(() => "?")
@@ -44,20 +74,18 @@ export async function GET(req) {
       itemCodes
     );
 
-    // 코드별로 맵핑
     const itemMap = {};
     for (const row of itemRows) {
       itemMap[row.itemCode] = row;
     }
 
-    // inventory에 아이템 정보 매칭해서 반환
     const mergedInventory = inventory.map((inv) => ({
       ...inv,
-      ...itemMap[inv.item], // item, count, + itemName, itemImage, itemInfo
+      ...itemMap[inv.item],
     }));
 
     return Response.json({
-      money: rows[0].money,
+      money,
       inventory: mergedInventory,
     });
   } catch (error) {

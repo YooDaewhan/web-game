@@ -7,7 +7,7 @@ import { Header, Footer } from "@/components/layout";
 import { useSectionStore } from "@/store/sectionStore";
 
 export default function MainPage() {
-  const { user, status, inventory, loading } = useUserData();
+  const { user, status, loading } = useUserData();
   const currentSection = useSectionStore((state) => state.currentSection);
 
   if (loading) return <div>로딩 중...</div>;
@@ -34,7 +34,7 @@ export default function MainPage() {
           )}
         </section>
         <aside style={{ flex: 1, background: "#eee", padding: "1rem" }}>
-          <Inventory inventory={inventory} />
+          <Inventory />
         </aside>
       </main>
 
