@@ -8,14 +8,19 @@ export async function POST(req) {
       return NextResponse.json({ error: "필수값 누락" }, { status: 400 });
     }
 
-    // 트랜잭션 또는 순차 쿼리 (트랜잭션은 DB/유틸마다 방식 다름)
     await db.query(
       "INSERT INTO status (id, name, birth, sex) VALUES (?, ?, ?, ?)",
       [id, name, birth, sex]
     );
     await db.query("INSERT INTO inventory (id, inventory) VALUES (?, ?)", [
       id,
-      JSON.stringify([]),
+      JSON.stringify([
+        { item: "aa001", count: 1000 },
+        { item: "aa002", count: 1 },
+        { item: "aa003", count: 5 },
+        { item: "aa004", count: 5 },
+        { item: "aa005", count: 1 },
+      ]),
     ]);
 
     return NextResponse.json({ success: true });
